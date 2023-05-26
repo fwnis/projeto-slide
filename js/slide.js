@@ -1,8 +1,11 @@
+import debounce from "./debounce.js"
+
 export default class Slide {
   constructor(slide, wrapper) {
     this.slide = document.querySelector(slide);
     this.wrapper = document.querySelector(wrapper);
     this.dist = { finalPosition: 0, startX: 0, movement: 0 };
+    this.activeClass = "active";
   }
 
   transition(active) {
@@ -30,7 +33,7 @@ export default class Slide {
       movetype = "touchmove";
     }
     this.wrapper.addEventListener(movetype, this.onMove);
-    this.transition(false)
+    this.transition(false);
   }
 
   onMove(event) {
@@ -46,7 +49,7 @@ export default class Slide {
     const movetype = event.type === "mouseup" ? "mousemove" : "touchmove";
     this.wrapper.removeEventListener(movetype, this.onMove);
     this.dist.finalPosition = this.dist.movePosition;
-    this.transition(true)
+    this.transition(true);
     this.changeSlideOnEnd();
   }
 
@@ -65,12 +68,6 @@ export default class Slide {
     this.wrapper.addEventListener("touchstart", this.onStart);
     this.wrapper.addEventListener("mouseup", this.onEnd);
     this.wrapper.addEventListener("touchend", this.onEnd);
-  }
-
-  bindEvents() {
-    this.onStart = this.onStart.bind(this);
-    this.onMove = this.onMove.bind(this);
-    this.onEnd = this.onEnd.bind(this);
   }
 
   // Slides config
@@ -102,6 +99,12 @@ export default class Slide {
     this.moveSlide(this.slideArray[index].position);
     this.slidesIndexNav(index);
     this.dist.finalPosition = activeSlide.position;
+    this.changeActiveClass();
+  }
+
+  changeActiveClass() {
+    this.slideArray.forEach(item => item.element.classList.remove(this.activeClass))
+    this.slideArray[this.index.active].element.classList.add(this.activeClass);
   }
 
   activePrevSlide() {
@@ -116,11 +119,30 @@ export default class Slide {
     }
   }
 
+  onResize() {
+    setTimeout(() => {
+      this.slidesConfig()
+      this.changeSlide(this.index.active)
+    }, 1000)
+  }
+
+  addResizeEvent() {
+    window.addEventListener("resize", this.onResize)
+  }
+
+  bindEvents() {
+    this.onStart = this.onStart.bind(this);
+    this.onMove = this.onMove.bind(this);
+    this.onEnd = this.onEnd.bind(this);
+    this.onResize = debounce(this.onResize.bind(this), 200)
+  }
+
   init() {
     this.bindEvents();
-    this.transition(true)
+    this.transition(true);
     this.addSlideEvents();
     this.slidesConfig();
+    this.addResizeEvent()
     return this;
   }
 }
